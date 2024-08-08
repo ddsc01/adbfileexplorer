@@ -1,0 +1,24 @@
+@import 'bootstrap';
+@import 'font-awesome';
+
+body {
+  padding-top: 150px;
+}
+#files > .row > div {
+  line-height: 16px;
+  font-size: 16px;
+}
+.directory, .file {
+  margin: 5px 0;
+  cursor: pointer;
+  border-radius: 5px;
+}
+.file.file-selected {
+  color: #00FF00;
+}
+.directory {
+  font-weight: bold;
+}
+#backButton {
+  cursor: pointer;
+}

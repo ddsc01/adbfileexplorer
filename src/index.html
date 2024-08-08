@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ADB File Manager</title>
+</head>
+<body>
+  <nav id="navBar" class="navbar navbar-expand-md navbar-dark fixed-top bg-dark text-light p-4">
+    <div class="container-fluid">
+      <div id="devicesList" class="float-start">
+        <h3>Your Devices:</h3>
+        <div id="devices" class="d-inline-block"></div>
+        <div id="connect_ip" class="d-inline-block btn btn-outline-primary">Connect IP</div>
+        <div id="information" class="d-block"></div>
+      </div>
+      <button id="downloadButton" class="btn btn-success d-none float-end"><i class="fa fa-download"></i> Download Selected</button>
+    </div>
+  </nav>
+  <main id="listing" class="container">
+    <div id="backButton">back to /</div>
+    <div id="files"></div>
+  </main>
+</body>
+</html>
