@@ -18,13 +18,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentDir = '/sdcard';
     let selectedFiles = [];
 
-    if (!await electronAPI.invoke('check-adb-installed')) {
-        devicesDiv.innerText = 'ADB is not installed. Please install it first.';
-        return;
+    if (!await checkAdb()) {
+        information.innerText = 'ADB is not installed. Please install it first.';
+        devicesDiv.innerHTML = '<div class="btn btn-outline-danger me-2" id="recheck-adb">Recheck ADB</div>';
+        document.getElementById('recheck-adb').addEventListener('click', async () => {
+            if(await checkAdb()) {
+                await init();
+            }
+        });
+    } else {
+        await init();
     }
 
-    await checkDevices();
-    checkNavbar();
+    async function init() {
+        await checkDevices();
+        checkNavbar();
+        connectIPButton.classList.remove('d-none');
+    }
 
     connectIPButton.addEventListener('click', () => {
         connectIP();
@@ -79,6 +89,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             modalElement.remove();
         });
         promptModal.show();
+    }
+
+    async function checkAdb() {
+        return await electronAPI.invoke('check-adb-installed');
     }
 
     async function checkDevices() {
