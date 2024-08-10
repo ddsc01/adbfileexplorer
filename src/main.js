@@ -1,8 +1,8 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
-const adb = require('adbkit');
-const client = adb.createClient();
+const { Adb } = require('@devicefarmer/adbkit');
+const client = Adb.createClient();
 
 if (require('electron-squirrel-startup')) {
   app.quit();
