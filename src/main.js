@@ -2,11 +2,12 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { Adb } = require('@devicefarmer/adbkit');
-const client = Adb.createClient();
 
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
+
+const client = Adb.createClient();
 
 let mainWindow;
 const createWindow = () => {
@@ -56,7 +57,8 @@ ipcMain.handle('list-devices', async () => {
 ipcMain.handle('list-files', async (event, deviceId, dir) => {
   try {
     const target = dir + '/';
-    const files = await client.readdir(deviceId, target);
+    const device = client.getDevice(deviceId);
+    const files = await device.readdir(target);
 
     const unordered = files.map(file => ({
       name: file.name,
@@ -79,11 +81,12 @@ ipcMain.handle('download-files', async (event, deviceId, dir, files) => {
     if (!destDir) {
       openDirectory();
     }
+    const device = client.getDevice(deviceId);
 
     for (const file of files) {
       const remotePath = `${dir}/${file}`;
       const localPath = path.join(destDir, path.basename(file));
-      await client.pull(deviceId, remotePath)
+      await device.pull(remotePath)
           .then(transfer => new Promise((resolve, reject) => {
             transfer.on('end', resolve);
             transfer.on('error', reject);
