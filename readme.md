@@ -7,3 +7,6 @@ I asked myself why not use adb for it? And here it is.
 ### Make sure you have ADB installed
 Information on ADB: https://developer.android.com/tools/adb \
 Download Plattform Tools: https://developer.android.com/studio/releases/platform-tools
+
+### Handling issues
+- If the App does not find ADB, try starting the ADB Server manually from command line running `adb start-server`
