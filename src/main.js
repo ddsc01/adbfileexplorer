@@ -20,6 +20,7 @@ const createWindow = () => {
     },
   });
 
+  mainWindow.webContents.openDevTools();
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 };
 
@@ -99,6 +100,58 @@ ipcMain.handle('download-files', async (event, deviceId, dir, files) => {
     console.error('Error downloading files:', error);
     return false;
   }
+});
+
+ipcMain.handle('preview', async (event, deviceId, dir, file) => {
+  try {
+    const device = client.getDevice(deviceId);
+    const remotePath = `${dir}/${file}`;
+    const localPath = path.join(app.getPath("temp"), path.basename(file));
+    await device.pull(remotePath)
+        .then(transfer => new Promise((resolve, reject) => {
+          transfer.on('end', resolve);
+          transfer.on('error', reject);
+          transfer.pipe(fs.createWriteStream(localPath));
+        }));
+    return Buffer.from(fs.readFileSync(localPath)).toString('base64');
+  } catch(error) {
+    console.error('Error previewing file:', error);
+    return false;
+  }
+});
+
+ipcMain.handle('delete', async (event, deviceId, dir, file) => {
+  try {
+    const device = client.getDevice(deviceId);
+    const remotePath = `${dir}/${file}`;
+    const success = await device.shell(`rm -f ${remotePath}`);
+    return true;
+  } catch(error) {
+    console.error('Error previewing file:', error);
+    return false;
+  }
+});
+
+ipcMain.handle('upload', async (event, deviceId, dir) => {
+  try {
+    const device = client.getDevice(deviceId);
+    const file = await dialog.showOpenDialogSync(mainWindow, {
+      properties: ['openFile']
+    })[0];
+    if(file && file.length > 0) {
+      const transfer = await device.push(file, dir + '/' + path.basename(file));
+      transfer.on('progress', (stats) =>
+          console.log(`[${deviceId}] Pushed ${stats.bytesTransferred} bytes so far`),
+      );
+      transfer.on('end', () => {
+        console.log(`[${deviceId}] Push complete`);
+      });
+      return file;
+    }
+  } catch(error) {
+    console.log('upload error', error);
+  }
+  return false;
 });
 
 ipcMain.handle('connect-ip', async (event, ip) => {

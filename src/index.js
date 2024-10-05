@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const filesDiv = document.getElementById('files');
     const backButton = document.getElementById('backButton');
     const downloadButton = document.getElementById('downloadButton');
+    const uploadButton = document.getElementById('uploadButton');
     const information = document.getElementById('information');
 
     let currentDeviceId = null;
@@ -34,30 +35,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         await checkDevices();
         checkNavbar();
         connectIPButton.classList.remove('d-none');
+        uploadButton.classList.remove('d-none');
     }
 
     connectIPButton.addEventListener('click', () => {
         connectIP();
     });
 
-    function connectIP() {
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.id = 'promptModal';
-        modal.innerHTML = `<div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">Enter the IP Address of your Device</div>
-            <div class="modal-body">
-                <input type="text" id="ip-address" name="ip-address" class="form-control">
-            </div>
-            <div class="modal-footer">
-               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-               <button type="button" class="btn btn-primary" id="okModal">OK</button>
-            </div>
-        </div>
-    </div>`;
-        body.appendChild(modal);
+    uploadButton.addEventListener('click', () => {
+        upload();
+    });
 
+    function connectIP() {
         const modalElement = document.getElementById('promptModal');
         const promptModal = new bootstrap.Modal(document.getElementById('promptModal'), {
             keyboard: false
@@ -67,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 await electronAPI.invoke('connect-ip', ip.value);
                 await checkDevices();
-                promptModal.hide();
+                promptModal.remove();
             } catch(e) {
                 alert("Error connecting IP address, did you enter a valid IP address?\n" + e.message);
             }
@@ -85,10 +74,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         });
-        modalElement.addEventListener('hidden.bs.modal', () => {
-            modalElement.remove();
-        });
         promptModal.show();
+    }
+
+    async function upload() {
+        const file = await electronAPI.invoke('upload',  currentDeviceId, currentDir);
+        if(file && file.length > 0) {
+            setTimeout(() => {
+                listFiles(currentDir);
+            }, 200);
+        }
     }
 
     async function checkAdb() {
@@ -154,12 +149,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             const fileInfo = `<div class="col-4">${date} - ${fileSize}</div>`;
             if(file.isDir) {
                 listItems[0] += `<div class="row">
-                        <div class="col-8 directory" data-name="${file.name}"><i class="fa fa-folder"></i> ${file.name}</div>
+                        <div class="col-7 directory" data-name="${file.name}"><i class="fa fa-folder"></i> ${file.name}</div>
                         ${fileInfo}
                     </div>`;
             } else {
+                const actions_start = '<div class="col-1 actions">';
+                const actions_end = '</div>'
+                const remove = `<i class="fa fa-trash delete text-danger" data-file="${file.name}"></i>`;
+                let preview = '';
+                if(
+                    file.name.toLowerCase().indexOf('.jpg') === file.name.length - 4 ||
+                    file.name.toLowerCase().indexOf('.png') === file.name.length - 4
+                ) {
+                    const type = file.name.substring(file.name.length - 3);
+                    preview = `<i class="fa fa-search-plus preview" data-image="${file.name}" data-type="${type}"></i>`;
+                }
                 listItems[1] += `<div class="row">
-                        <div class="col-8 file" data-name="${file.name}"><i class="fa fa-file"></i> ${file.name}</div>
+                        <div class="col-7 file" data-name="${file.name}"><i class="fa fa-file"></i> ${file.name}</div>
+                        ${actions_start}
+                            ${preview}
+                            ${remove}
+                        ${actions_end}
                         ${fileInfo}
                     </div>`;
             }
@@ -199,6 +209,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                     event.target.classList.add('file-selected');
                 }
                 checkSelected();
+            });
+        });
+
+        document.querySelectorAll('.preview').forEach(div => {
+            div.addEventListener('click', async (event) => {
+                const fileName = event.target.dataset.image;
+                const fileType = event.target.dataset.type;
+                const success = await electronAPI.invoke('preview', currentDeviceId, currentDir, fileName);
+                if (success) {
+                    const modalImage = document.getElementById('modalImage');
+                    modalImage.src = `data:image/${fileType};base64,${success}`;
+
+                    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+                    modal.show();
+                } else {
+                    alert('Something went wrong!');
+                }
+            });
+        });
+
+        document.querySelectorAll('.delete').forEach(div => {
+            div.addEventListener('click', async (event) => {
+                const fileName = event.target.dataset.file;
+                const confirmModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+                confirmModal.show();
+
+                const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+                confirmDeleteBtn.onclick = async () => {
+                    const success = await electronAPI.invoke('delete', currentDeviceId, currentDir, fileName);
+                    if (success) {
+                        setTimeout(() => {
+                            listFiles(currentDir);
+                        }, 200);
+                    } else {
+                        alert('Something went wrong!');
+                    }
+                    confirmModal.hide();
+                }
             });
         });
     }

@@ -19,6 +19,6 @@ body {
 .directory {
   font-weight: bold;
 }
-#backButton {
+#backButton, .actions i {
   cursor: pointer;
 }
