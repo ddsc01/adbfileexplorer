@@ -38,6 +38,7 @@
     "bootstrap": "^5.3.3",
     "css-loader": "^7.1.2",
     "electron-squirrel-startup": "^1.0.1",
+    "fix-path": "^4.0.0",
     "font-awesome": "^4.7.0",
     "inquirer": "^10.1.2",
     "style-loader": "^4.0.0"
