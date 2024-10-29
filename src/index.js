@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const filesDiv = document.getElementById('files');
     const backButton = document.getElementById('backButton');
     const downloadButton = document.getElementById('downloadButton');
+    const deleteButton = document.getElementById('deleteButton');
     const uploadButton = document.getElementById('uploadButton');
     const information = document.getElementById('information');
 
@@ -134,6 +135,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                     alert('Error downloading files.');
                 }
             });
+
+            deleteButton.addEventListener('click', async () => {
+                if (selectedFiles.length === 0) {
+                    alert('No files selected to delete.');
+                    return;
+                }
+                const confirmModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+                confirmModal.show();
+
+                const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+                confirmDeleteBtn.onclick = async () => {
+                    const success = await electronAPI.invoke('delete-files', currentDeviceId, currentDir, selectedFiles);
+                    if (success) {
+                        alert('Files deleted successfully.');
+                        const selectedElements = document.querySelectorAll('.file.file-selected');
+                        await listFiles(currentDir);
+                    } else {
+                        alert('Error downloading files.');
+                    }
+                    confirmModal.hide();
+                }
+            });
         }
     }
 
@@ -218,6 +241,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const fileType = event.target.dataset.type;
                 const success = await electronAPI.invoke('preview', currentDeviceId, currentDir, fileName);
                 if (success) {
+                    const modalTitle = document.getElementById('imageModalLabel');
+                    modalTitle.innerText = fileName;
                     const modalImage = document.getElementById('modalImage');
                     modalImage.src = `data:image/${fileType};base64,${success}`;
 
@@ -287,8 +312,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if(selectedFiles.length > 0) {
             downloadButton.classList.remove('d-none');
+            deleteButton.classList.remove('d-none');
         } else {
             downloadButton.classList.add('d-none');
+            deleteButton.classList.add('d-none');
         }
     }
 
