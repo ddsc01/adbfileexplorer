@@ -2,12 +2,14 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { Adb } = require('@devicefarmer/adbkit');
+import fixPath from 'fix-path';
 
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
 const client = Adb.createClient();
+fixPath();
 
 let mainWindow;
 const createWindow = () => {
@@ -126,7 +128,23 @@ ipcMain.handle('delete', async (event, deviceId, dir, file) => {
     const success = await device.shell(`rm -f ${remotePath}`);
     return true;
   } catch(error) {
-    console.error('Error previewing file:', error);
+    console.error('Error deleting file:', error);
+    return false;
+  }
+});
+
+ipcMain.handle('delete-files', async (event, deviceId, dir, files) => {
+  try {
+    const device = client.getDevice(deviceId);
+
+    for (const file of files) {
+      const remotePath = `${dir}/${file}`;
+      await device.shell(`rm -f ${remotePath}`);
+    }
+
+    return true;
+  } catch(error) {
+    console.error('Error deleting files:', error);
     return false;
   }
 });
