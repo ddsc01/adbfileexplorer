@@ -4,6 +4,9 @@
 body {
   padding-top: 150px;
 }
+#files > .row:hover {
+  background: #ddd;
+}
 #files > .row > div {
   line-height: 16px;
   font-size: 16px;
