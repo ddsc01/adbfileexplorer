@@ -152,18 +152,20 @@ ipcMain.handle('delete-files', async (event, deviceId, dir, files) => {
 ipcMain.handle('upload', async (event, deviceId, dir) => {
   try {
     const device = client.getDevice(deviceId);
-    const file = await dialog.showOpenDialogSync(mainWindow, {
+    const file = dialog.showOpenDialogSync(mainWindow, {
       properties: ['openFile']
-    })[0];
+    });
     if(file && file.length > 0) {
-      const transfer = await device.push(file, dir + '/' + path.basename(file));
-      transfer.on('progress', (stats) =>
-          console.log(`[${deviceId}] Pushed ${stats.bytesTransferred} bytes so far`),
-      );
-      transfer.on('end', () => {
-        console.log(`[${deviceId}] Push complete`);
-      });
-      return file;
+      const transfer = await device.push(file[0], dir + '/' + path.basename(file[0]));
+      if(transfer) {
+        transfer.on('progress', (stats) =>
+            console.log(`[${deviceId}] Pushed ${stats.bytesTransferred} bytes so far`),
+        );
+        transfer.on('end', () => {
+          console.log(`[${deviceId}] Push complete`);
+        });
+        return file[0];
+      }
     }
   } catch(error) {
     console.log('upload error', error);
